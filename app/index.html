@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breast Cancer Classifier Demo</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2230; --mute:#69728a; --line:#dfe3ec;
+          --accent:#2f5bea; --bad:#c62f3a; --good:#1f8a4c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151c; --card:#1b202b; --ink:#e8ebf2; --mute:#98a1b8; --line:#2c3344;
+            --accent:#6b8cff; --bad:#ff6b76; --good:#4cc982; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .sub { color:var(--mute); margin:0 0 20px; }
+  .warn { border:1px solid var(--bad); color:var(--bad); border-radius:8px;
+          padding:8px 12px; font-size:13px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:18px; margin-bottom:18px; }
+  .tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .tab { padding:8px 14px; border:1px solid var(--line); border-radius:8px;
+         background:transparent; color:var(--ink); cursor:pointer; font:inherit; }
+  .tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .drop { border:2px dashed var(--line); border-radius:10px; padding:28px; text-align:center;
+          color:var(--mute); cursor:pointer; }
+  .drop.over { border-color:var(--accent); color:var(--accent); }
+  button.go, button.alt { padding:9px 16px; border-radius:8px; font:inherit; cursor:pointer; }
+  button.go { background:var(--accent); color:#fff; border:0; }
+  button.alt { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  button:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; }
+  label { font-size:12px; color:var(--mute); display:block; }
+  input[type=number] { width:100%; padding:6px 8px; border:1px solid var(--line);
+         border-radius:6px; background:var(--bg); color:var(--ink); font:inherit; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  .pill { padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; color:#fff; }
+  .m { background:var(--bad); } .b { background:var(--good); }
+  .big { font-size:26px; font-weight:700; margin:0; }
+  .tablewrap { max-height:420px; overflow:auto; }
+  .hidden { display:none; }
+  .err { color:var(--bad); margin-top:10px; white-space:pre-wrap; }
+  .mute { color:var(--mute); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Breast Cancer Classifier</h1>
+  <p class="sub">Upload a CSV or enter values by hand. The model runs on AWS Lambda.</p>
+  <div class="warn">Educational demo only. Not a diagnostic tool and not for medical use.</div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" data-tab="upload">Upload CSV</button>
+      <button class="tab" data-tab="manual">Enter values</button>
+    </div>
+
+    <section id="upload">
+      <div class="drop" id="drop">Drop a CSV here, or click to choose a file
+        <input id="file" type="file" accept=".csv,text/csv" class="hidden"></div>
+      <p class="mute" id="fileinfo">
+        Needs the 30 feature columns (e.g. <code>mean radius</code>). An optional
+        <code>malignant</code> (1 = malignant) or <code>target</code> (0 = malignant) column
+        is used to show accuracy. Up to 1000 rows.</p>
+      <div class="row"><button class="go" id="runcsv" disabled>Predict all rows</button></div>
+    </section>
+
+    <section id="manual" class="hidden">
+      <div class="row" style="margin:0 0 12px">
+        <button class="alt" id="sm">Load malignant sample</button>
+        <button class="alt" id="sb">Load benign sample</button>
+        <button class="alt" id="clear">Clear</button>
+      </div>
+      <div class="grid" id="fields"></div>
+      <div class="row"><button class="go" id="runone">Predict</button></div>
+    </section>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="card hidden" id="out"></div>
+</main>
+
+<script>
+const SAMPLES = {"malignant": {"mean radius": 20.94, "mean texture": 23.56, "mean perimeter": 138.9, "mean area": 1364.0, "mean smoothness": 0.1007, "mean compactness": 0.1606, "mean concavity": 0.2712, "mean concave points": 0.131, "mean symmetry": 0.2205, "mean fractal dimension": 0.05898, "radius error": 1.004, "texture error": 0.8208, "perimeter error": 6.372, "area error": 137.9, "smoothness error": 0.005283, "compactness error": 0.03908, "concavity error": 0.09518, "concave points error": 0.01864, "symmetry error": 0.02401, "fractal dimension error": 0.005002, "worst radius": 25.58, "worst texture": 27.0, "worst perimeter": 165.3, "worst area": 2010.0, "worst smoothness": 0.1211, "worst compactness": 0.3172, "worst concavity": 0.6991, "worst concave points": 0.2105, "worst symmetry": 0.3126, "worst fractal dimension": 0.07849}, "benign": {"mean radius": 11.41, "mean texture": 10.82, "mean perimeter": 73.34, "mean area": 403.3, "mean smoothness": 0.09373, "mean compactness": 0.06685, "mean concavity": 0.03512, "mean concave points": 0.02623, "mean symmetry": 0.1667, "mean fractal dimension": 0.06113, "radius error": 0.1408, "texture error": 0.4607, "perimeter error": 1.103, "area error": 10.5, "smoothness error": 0.00604, "compactness error": 0.01529, "concavity error": 0.01514, "concave points error": 0.00646, "symmetry error": 0.01344, "fractal dimension error": 0.002206, "worst radius": 12.82, "worst texture": 15.97, "worst perimeter": 83.74, "worst area": 510.5, "worst smoothness": 0.1548, "worst compactness": 0.239, "worst concavity": 0.2102, "worst concave points": 0.08958, "worst symmetry": 0.3016, "worst fractal dimension": 0.08523}};
+const $ = id => document.getElementById(id);
+let FEATURES = [], rows = [], truth = null;
+
+fetch("features").then(r => r.json()).then(f => {
+  FEATURES = f;
+  $("fields").innerHTML = f.map(n =>
+    `<div><label>${n}</label><input type="number" step="any" data-f="${n}"></div>`).join("");
+});
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  $("upload").classList.toggle("hidden", t.dataset.tab !== "upload");
+  $("manual").classList.toggle("hidden", t.dataset.tab !== "manual");
+  $("err").textContent = "";
+});
+
+function fill(obj) {
+  document.querySelectorAll("[data-f]").forEach(i => i.value = obj ? obj[i.dataset.f] : "");
+}
+$("sm").onclick = () => fill(SAMPLES.malignant);
+$("sb").onclick = () => fill(SAMPLES.benign);
+$("clear").onclick = () => fill(null);
+
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); load(e.dataTransfer.files[0]); };
+$("file").onchange = e => load(e.target.files[0]);
+
+function load(file) {
+  if (!file) return;
+  $("err").textContent = "";
+  const rd = new FileReader();
+  rd.onload = () => {
+    const lines = rd.result.replace(/\r/g, "").split("\n").filter(l => l.trim());
+    const head = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ""));
+    const missing = FEATURES.filter(f => !head.includes(f));
+    if (missing.length) {
+      rows = []; $("runcsv").disabled = true;
+      $("err").textContent = `Missing columns, e.g. ${missing.slice(0, 3).join(", ")}`;
+      return;
+    }
+    rows = lines.slice(1).map(l => {
+      const c = l.split(",");
+      const o = {}; head.forEach((h, i) => o[h] = c[i]); return o;
+    });
+    truth = null;
+    if (head.includes("malignant")) truth = rows.map(r => Number(r.malignant) === 1);
+    else if (head.includes("target")) truth = rows.map(r => Number(r.target) === 0);
+    rows = rows.map(r => Object.fromEntries(FEATURES.map(f => [f, Number(r[f])])));
+    $("fileinfo").textContent = `${file.name}: ${rows.length} rows loaded` +
+      (truth ? " (labels found, accuracy will be shown)" : "");
+    $("runcsv").disabled = rows.length === 0;
+  };
+  rd.readAsText(file);
+}
+
+async function post(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail));
+  return j;
+}
+const pill = l => `<span class="pill ${l === "malignant" ? "m" : "b"}">${l}</span>`;
+
+$("runone").onclick = async () => {
+  $("err").textContent = "";
+  const feats = {};
+  for (const i of document.querySelectorAll("[data-f]")) {
+    if (i.value === "") { $("err").textContent = `Fill in "${i.dataset.f}" (or load a sample)`; return; }
+    feats[i.dataset.f] = Number(i.value);
+  }
+  try {
+    const r = await post("predict", { features: feats });
+    show(`<p class="big">${pill(r.label)}</p>
+      <p>Probability malignant: <b>${(r.probability_malignant * 100).toFixed(1)}%</b></p>
+      <p class="mute">${r.disclaimer}</p>`);
+  } catch (e) { $("err").textContent = e.message; }
+};
+
+$("runcsv").onclick = async () => {
+  $("err").textContent = "";
+  try {
+    const r = await post("predict_batch", { rows });
+    const res = r.results;
+    const mal = res.filter(x => x.label === "malignant").length;
+    let acc = "";
+    if (truth) {
+      const ok = res.filter((x, i) => (x.label === "malignant") === truth[i]).length;
+      acc = `<p>Matches the labels in your file: <b>${ok}/${res.length}</b> (${(100 * ok / res.length).toFixed(1)}%)</p>`;
+    }
+    show(`<p><b>${res.length}</b> rows: ${mal} malignant, ${res.length - mal} benign</p>${acc}
+      <div class="tablewrap"><table><tr><th>#</th><th>Prediction</th><th>Probability malignant</th>
+      ${truth ? "<th>Actual</th>" : ""}</tr>
+      ${res.map((x, i) => `<tr><td>${i + 1}</td><td>${pill(x.label)}</td>
+        <td>${(x.probability_malignant * 100).toFixed(1)}%</td>
+        ${truth ? `<td>${truth[i] ? "malignant" : "benign"}</td>` : ""}</tr>`).join("")}
+      </table></div><p class="mute">${r.disclaimer}</p>`);
+  } catch (e) { $("err").textContent = e.message; }
+};
+
+function show(html) { const o = $("out"); o.innerHTML = html; o.classList.remove("hidden"); o.scrollIntoView({behavior:"smooth"}); }
+</script>
+</body>
+</html>
