@@ -1,4 +1,4 @@
-import json, time
+import json, os, time
 from pathlib import Path
 import joblib, pandas as pd
 from fastapi import FastAPI, HTTPException
@@ -7,7 +7,7 @@ from pydantic import BaseModel
 MODEL = joblib.load("models/model.joblib")
 THRESHOLD = json.load(open("models/threshold.json"))["threshold"]
 FEATURES = json.load(open("models/features.json"))
-LOG = Path("logs/predictions.jsonl")
+LOG = Path(os.environ.get("LOG_PATH", "logs/predictions.jsonl"))
 LOG.parent.mkdir(exist_ok=True)
 
 app = FastAPI(title="Breast cancer demo API (educational only)")
