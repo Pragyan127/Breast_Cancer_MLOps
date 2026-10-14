@@ -1,0 +1,13 @@
+scikit-learn
+pandas
+joblib
+pyyaml
+mlflow
+dvc[s3]
+fastapi
+uvicorn
+pydantic
+evidently==0.4.40
+pytest
+httpx
+ruff
