@@ -1,0 +1,12 @@
+.venv
+cancer mlops
+.git
+.dvc
+mlruns
+mlflow.db
+data
+reports
+logs
+tests
+__pycache__
+*.pyc

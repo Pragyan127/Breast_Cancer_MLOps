@@ -1,0 +1,70 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+    - path: data/raw/wdbc.csv
+      hash: md5
+      md5: 5afc23b9622f8f9ffa60824f4e97d0d5
+      size: 121385
+    - path: src/prepare.py
+      hash: md5
+      md5: 4b7c5700fdc1b3f80ff560e05f68d319
+      size: 554
+    params:
+      params.yaml:
+        prepare:
+          test_size: 0.2
+          seed: 42
+    outs:
+    - path: data/processed
+      hash: md5
+      md5: eb5a4c85a7ac0b22098ba44ebad5368e.dir
+      size: 121883
+      nfiles: 2
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: a1de5273aa18e545b7ce9cdb90c65fa9
+      size: 97169
+    - path: src/train.py
+      hash: md5
+      md5: 505854bd09ccdcd4405011a5789de055
+      size: 1754
+    params:
+      params.yaml:
+        train:
+          model: logreg
+          C: 1.0
+          n_estimators: 200
+          max_depth: 5
+          target_recall: 0.97
+    outs:
+    - path: models
+      hash: md5
+      md5: c16532030c9580daf9e7456b14c09d25.dir
+      size: 3714
+      nfiles: 3
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: ee07b059e4fe3c4567ac473e8d08de63
+      size: 24714
+    - path: models
+      hash: md5
+      md5: c16532030c9580daf9e7456b14c09d25.dir
+      size: 3714
+      nfiles: 3
+    - path: src/evaluate.py
+      hash: md5
+      md5: 7cb8d11db0ea33d71cd0a6e9fc6888da
+      size: 840
+    outs:
+    - path: metrics.json
+      hash: md5
+      md5: 437f10d7f340cb902f5c1b1754cbd448
+      size: 200

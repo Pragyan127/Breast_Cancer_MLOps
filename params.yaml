@@ -1,0 +1,13 @@
+prepare:
+  test_size: 0.2
+  seed: 42
+train:
+  model: logreg        # logreg or rf
+  C: 1.0
+  n_estimators: 200
+  max_depth: 5
+  target_recall: 0.97  # used to pick the decision threshold
+gate:
+  min_recall: 0.95
+  min_precision: 0.90
+  min_roc_auc: 0.98

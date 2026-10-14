@@ -218,3 +218,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+/models
+/metrics.json
+
+mlflow.db
+
+mlruns/
+cancer mlops/
+logs/
+reports/
+/data/processed

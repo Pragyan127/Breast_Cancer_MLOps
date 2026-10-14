@@ -1,0 +1,38 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: ruff check .
+      - run: dvc pull data/raw/wdbc.csv.dvc
+      - run: dvc repro
+      - name: Quality gate
+        run: python src/gate.py
+      - run: pytest -q
+      - name: Build image
+        run: docker build -t bc-api .
+      - name: Smoke test container
+        run: |
+          docker run -d -p 8000:8000 --name api bc-api
+          sleep 5
+          curl --fail localhost:8000/health
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metrics
+          path: metrics.json

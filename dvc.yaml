@@ -1,0 +1,15 @@
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps: [src/prepare.py, data/raw/wdbc.csv]
+    params: [prepare]
+    outs: [data/processed]
+  train:
+    cmd: python src/train.py
+    deps: [src/train.py, data/processed/train.csv]
+    params: [train]
+    outs: [models]
+  evaluate:
+    cmd: python src/evaluate.py
+    deps: [src/evaluate.py, models, data/processed/test.csv]
+    metrics: [metrics.json]

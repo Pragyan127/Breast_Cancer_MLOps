@@ -1,0 +1,10 @@
+[tool.ruff]
+extend-exclude = ["cancer mlops"]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E401", "E701", "E702", "E501"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
