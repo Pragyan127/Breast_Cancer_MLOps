@@ -1,0 +1,5 @@
+[core]
+    remote = storage
+['remote "storage"']
+    url = s3://breast-cancer-mlops/dvcstore
+    region = ap-southeast-2
