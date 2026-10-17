@@ -22,7 +22,7 @@ X, y = train.drop(columns="malignant"), train["malignant"]
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
 
 configs = (
-    [{"model": "logreg", "C": c} for c in (0.01, 0.1, 1.0, 10.0)]
+    [{"model": "logreg", "C": c} for c in (0.01, 0.1, 0.5, 1.0, 10.0)]
     + [{"model": "rf", "n_estimators": n, "max_depth": d}
        for n, d in ((100, 3), (200, 5), (300, 8))]
 )

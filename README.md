@@ -56,12 +56,14 @@ The CI gate fails the build if test recall drops below 0.95, precision below 0.9
 
 ### Experiment comparison
 
-Seven configurations were compared with the same 5-fold CV on the training set (`src/sweep.py`).
+Logistic regression and random forest configurations were compared with the same 5-fold CV on the training set
+(`src/sweep.py`; the C=0.5 row comes from the pipeline run itself, which uses the same CV).
 At the fixed recall target, the differences show up in precision and calibration:
 
 | Run | CV ROC AUC | CV recall | CV precision | CV Brier |
 |---|---|---|---|---|
-| **logreg, C=1.0 (deployed)** | **0.9953** | 0.971 | **0.954** | **0.0191** |
+| **logreg, C=0.5 (pipeline model)** | **0.9954** | 0.971 | **0.959** | 0.0194 |
+| logreg, C=1.0 | 0.9953 | 0.971 | 0.954 | **0.0191** |
 | logreg, C=0.1 | 0.9948 | 0.971 | 0.954 | 0.0250 |
 | logreg, C=10 | 0.9934 | 0.971 | 0.948 | 0.0237 |
 | logreg, C=0.01 | 0.9913 | 0.971 | 0.938 | 0.0473 |
@@ -69,8 +71,9 @@ At the fixed recall target, the differences show up in precision and calibration
 | random forest, 300 trees, depth 8 | 0.9883 | 0.971 | 0.912 | 0.0320 |
 | random forest, 100 trees, depth 3 | 0.9872 | 0.971 | 0.851 | 0.0367 |
 
-A simple linear model beat the random forests on every measure here. Model selection used only the
-training set; the test set was used once, for the numbers above.
+A simple linear model beat the random forests on every measure here. The C=0.5 and C=1.0 models are
+nearly indistinguishable in CV (differences in the third decimal). The sweep compared configurations using
+cross-validation on the training set only; the held-out test set is used for the final numbers above.
 
 ![MLflow runs](docs/images/mlflow-runs.png)
 

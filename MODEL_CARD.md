@@ -5,7 +5,7 @@ Educational demonstration of an MLOps pipeline. **Not a medical device and not f
 any clinical decision.** The model has not been validated on patients or reviewed by clinicians.
 
 ## Model
-Logistic regression (C=1.0, max 1000 iterations) after standard scaling, in a scikit-learn pipeline.
+Logistic regression (C=0.5, max 1000 iterations) after standard scaling, in a scikit-learn pipeline.
 Output: probability that a tumour is malignant, converted to a label with a tuned threshold.
 
 ## Data
@@ -18,7 +18,8 @@ Split 80/20, stratified by label (455 train, 114 test, seed 42).
 The decision threshold is chosen on out-of-fold predictions from 5-fold stratified cross-validation on the
 training set: the highest threshold that still achieves recall of at least 0.97 on malignant cases.
 Recall was prioritised because a missed malignancy is the costlier mistake; the price is more false positives.
-The current threshold is about 0.357. The test set was not used for model or threshold selection.
+The current threshold is about 0.357, computed from cross-validation on the training set only (not from the test set).
+The regularisation strength was compared across configurations with the same cross-validation (see the README).
 
 ## Metrics (held-out test set, n=114, threshold applied)
 
