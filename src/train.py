@@ -3,7 +3,7 @@ from pathlib import Path
 import joblib, mlflow, mlflow.sklearn, numpy as np, pandas as pd, yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import precision_recall_curve, roc_auc_score
+from sklearn.metrics import brier_score_loss, precision_recall_curve, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -31,9 +31,15 @@ threshold = float(thr[ok[-1]]) if len(ok) else 0.5   # highest threshold meeting
 
 mlflow.set_tracking_uri("sqlite:///mlflow.db")
 mlflow.set_experiment("breast-cancer")
-with mlflow.start_run():
+with mlflow.start_run() as run:
     mlflow.log_params({**p, "threshold": round(threshold, 4)})
-    mlflow.log_metric("cv_roc_auc", roc_auc_score(y, oof))
+    pred = oof >= threshold
+    mlflow.log_metrics({
+        "cv_roc_auc": roc_auc_score(y, oof),
+        "cv_recall": recall_score(y, pred),
+        "cv_precision": precision_score(y, pred),
+        "cv_brier": brier_score_loss(y, oof),
+    })
     model.fit(X, y)
     mlflow.sklearn.log_model(model, "model")
 
@@ -41,3 +47,4 @@ Path("models").mkdir(exist_ok=True)
 joblib.dump(model, "models/model.joblib")
 json.dump({"threshold": threshold}, open("models/threshold.json", "w"))
 json.dump(list(X.columns), open("models/features.json", "w"))
+open("models/run_id.txt", "w").write(run.info.run_id)

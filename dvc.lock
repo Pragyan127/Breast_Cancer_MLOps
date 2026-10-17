@@ -31,22 +31,22 @@ stages:
       size: 97169
     - path: src/train.py
       hash: md5
-      md5: 505854bd09ccdcd4405011a5789de055
-      size: 1754
+      md5: a0c2e05ca2d3cc7759c5229d59a7b63e
+      size: 2050
     params:
       params.yaml:
         train:
           model: logreg
-          C: 1.0
+          C: 0.5
           n_estimators: 200
           max_depth: 5
           target_recall: 0.97
     outs:
     - path: models
       hash: md5
-      md5: c16532030c9580daf9e7456b14c09d25.dir
-      size: 3714
-      nfiles: 3
+      md5: d5aa7bf775ca3f86a9cced4d75c52267.dir
+      size: 3745
+      nfiles: 4
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -56,15 +56,15 @@ stages:
       size: 24714
     - path: models
       hash: md5
-      md5: c16532030c9580daf9e7456b14c09d25.dir
-      size: 3714
-      nfiles: 3
+      md5: d5aa7bf775ca3f86a9cced4d75c52267.dir
+      size: 3745
+      nfiles: 4
     - path: src/evaluate.py
       hash: md5
-      md5: 7cb8d11db0ea33d71cd0a6e9fc6888da
-      size: 840
+      md5: 9743fa2770a363a141a9d12eca44d176
+      size: 1409
     outs:
     - path: metrics.json
       hash: md5
-      md5: 437f10d7f340cb902f5c1b1754cbd448
-      size: 200
+      md5: 495230d1d5fc9fd2ba87db7dc8370602
+      size: 203
