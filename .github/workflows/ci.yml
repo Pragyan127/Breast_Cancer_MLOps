@@ -20,7 +20,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: ruff check .
-      - run: dvc pull data/raw/wdbc.csv.dvc
+      - run: python src/make_dataset.py
       - run: dvc repro
       - name: Quality gate
         run: python src/gate.py
@@ -33,11 +33,11 @@ jobs:
           sleep 5
           curl --fail localhost:8000/health
       - name: Login to ECR
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
       - name: Deploy to Lambda
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
         run: |
           IMAGE=${{ steps.ecr.outputs.registry }}/bc-api:${{ github.sha }}
           docker build --provenance=false -t $IMAGE .
